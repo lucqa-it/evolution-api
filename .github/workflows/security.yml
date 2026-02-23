@@ -1,13 +1,8 @@
 name: Security Scan
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
-  schedule:
-    - cron: '0 0 * * 1' # Weekly on Mondays
-
+  workflow_dispatch:
+    
 jobs:
   codeql:
     name: CodeQL Analysis
