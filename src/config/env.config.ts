@@ -260,8 +260,17 @@ export type EventsPusher = {
 
 export type ApiKey = { KEY: string };
 
+export type OidcConfig = {
+  ENABLED: boolean;
+  ISSUER: string;
+  JWKS_URI: string;
+  AUDIENCE?: string;
+  ALGORITHMS: string[];
+};
+
 export type Auth = {
   API_KEY: ApiKey;
+  OIDC: OidcConfig;
   EXPOSE_IN_FETCH_INSTANCES: boolean;
 };
 
@@ -867,6 +876,13 @@ export class ConfigService {
       AUTHENTICATION: {
         API_KEY: {
           KEY: process.env.AUTHENTICATION_API_KEY || 'BQYHJGJHJ',
+        },
+        OIDC: {
+          ENABLED: process.env?.AUTHENTICATION_OIDC_ENABLED === 'true',
+          ISSUER: process.env?.AUTHENTICATION_OIDC_ISSUER || '',
+          JWKS_URI: process.env?.AUTHENTICATION_OIDC_JWKS_URI || '',
+          AUDIENCE: process.env?.AUTHENTICATION_OIDC_AUDIENCE || '',
+          ALGORITHMS: (process.env?.AUTHENTICATION_OIDC_ALGORITHMS || 'RS256').split(','),
         },
         EXPOSE_IN_FETCH_INSTANCES: process.env?.AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES === 'true',
       },

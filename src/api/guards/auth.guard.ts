@@ -5,13 +5,38 @@ import { Logger } from '@config/logger.config';
 import { ForbiddenException, UnauthorizedException } from '@exceptions';
 import { NextFunction, Request, Response } from 'express';
 
+import { isJwtAuthenticated, jwtGuard } from './jwt.guard';
+
 const logger = new Logger('GUARD');
 
-async function apikey(req: Request, _: Response, next: NextFunction) {
-  const env = configService.get<Auth>('AUTHENTICATION').API_KEY;
+async function apikey(req: Request, res: Response, next: NextFunction) {
+  const authConfig = configService.get<Auth>('AUTHENTICATION');
+  const env = authConfig.API_KEY;
+  const oidcConfig = authConfig.OIDC;
   const key = req.get('apikey');
   const db = configService.get<Database>('DATABASE');
 
+  // Check if OIDC is enabled and try JWT authentication first
+  if (oidcConfig.ENABLED) {
+    try {
+      await jwtGuard(req, res, () => {});
+
+      // If JWT authentication succeeded, allow access
+      if (isJwtAuthenticated(req)) {
+        logger.log('Request authenticated via JWT/OIDC');
+        return next();
+      }
+    } catch (error) {
+      // If there was a Bearer token but it failed, throw the error
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
+        throw error;
+      }
+      // Otherwise, fall through to API key authentication
+    }
+  }
+
+  // Fall back to API key authentication
   if (!key) {
     throw new UnauthorizedException();
   }
