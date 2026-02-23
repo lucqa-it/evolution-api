@@ -41,6 +41,65 @@ export class MessageRouter extends RouterBroker {
   constructor(...guards: RequestHandler[]) {
     super();
     this.router
+      // Endpoint simplificado: /message/sendText/:project/:instanceName?to=NUMERO&message=TEXTO
+      .get('/sendText/:project/:instanceName', ...guards, async (req, res) => {
+        const { instanceName } = req.params;
+        const { to, message } = req.query;
+
+        if (!to || !message) {
+          return res.status(HttpStatus.BAD_REQUEST).json({
+            status: 'error',
+            message: 'Query parameters "to" and "message" are required',
+          });
+        }
+
+        const response = await this.dataValidate<SendTextDto>({
+          request: {
+            ...req,
+            params: { instanceName },
+            body: {
+              number: to as string,
+              text: message as string,
+            },
+          } as any,
+          schema: textMessageSchema,
+          ClassRef: SendTextDto,
+          execute: (instance, data) => sendMessageController.sendText(instance, data),
+        });
+
+        return res.status(HttpStatus.CREATED).json(response);
+      })
+      // Endpoint simplificado: /message/sendMedia/:project/:instanceName?to=NUMERO&mediaUrl=URL&mediatype=image&caption=TEXTO
+      .get('/sendMedia/:project/:instanceName', ...guards, async (req, res) => {
+        const { instanceName } = req.params;
+        const { to, mediaUrl, mediatype, caption, fileName } = req.query;
+
+        if (!to || !mediaUrl) {
+          return res.status(HttpStatus.BAD_REQUEST).json({
+            status: 'error',
+            message: 'Query parameters "to" and "mediaUrl" are required',
+          });
+        }
+
+        const response = await this.dataValidate<SendMediaDto>({
+          request: {
+            ...req,
+            params: { instanceName },
+            body: {
+              number: to as string,
+              media: mediaUrl as string,
+              mediatype: (mediatype as string) || 'image',
+              caption: caption as string,
+              fileName: fileName as string,
+            },
+          } as any,
+          schema: mediaMessageSchema,
+          ClassRef: SendMediaDto,
+          execute: (instance, data) => sendMessageController.sendMedia(instance, data, null),
+        });
+
+        return res.status(HttpStatus.CREATED).json(response);
+      })
       .post(this.routerPath('sendTemplate'), ...guards, async (req, res) => {
         const response = await this.dataValidate<SendTemplateDto>({
           request: req,

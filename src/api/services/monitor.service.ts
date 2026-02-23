@@ -156,6 +156,35 @@ export class WAMonitoringService {
     return this.instanceInfo(instanceNames);
   }
 
+  public async instanceInfoByProject(project: string): Promise<any> {
+    const clientName = this.configService.get<Database>('DATABASE').CONNECTION.CLIENT_NAME;
+
+    const instances = await this.prismaRepository.instance.findMany({
+      where: {
+        project,
+        clientName,
+      },
+      include: {
+        Chatwoot: true,
+        Proxy: true,
+        Rabbitmq: true,
+        Nats: true,
+        Sqs: true,
+        Websocket: true,
+        Setting: true,
+        _count: {
+          select: {
+            Message: true,
+            Contact: true,
+            Chat: true,
+          },
+        },
+      },
+    });
+
+    return instances;
+  }
+
   public async cleaningUp(instanceName: string) {
     let instanceDbId: string;
     if (this.db.SAVE_DATA.INSTANCE) {
@@ -255,6 +284,7 @@ export class WAMonitoringService {
           token: data.hash,
           clientName: clientName,
           businessId: data.businessId,
+          project: data.project,
         },
       });
     } catch (error) {

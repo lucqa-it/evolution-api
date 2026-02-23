@@ -70,6 +70,7 @@ export class InstanceController {
         number: instanceData.number,
         businessId: instanceData.businessId,
         status: instanceData.status,
+        project: instanceData.project,
       });
 
       instance.setInstance({
@@ -163,6 +164,7 @@ export class InstanceController {
             integration: instanceData.integration,
             webhookWaBusiness,
             accessTokenWaBusiness,
+            project: instanceData.project,
             status:
               typeof instance.connectionStatus === 'string'
                 ? instance.connectionStatus
@@ -257,6 +259,7 @@ export class InstanceController {
           integration: instanceData.integration,
           webhookWaBusiness,
           accessTokenWaBusiness,
+          project: instanceData.project,
           status:
             typeof instance.connectionStatus === 'string'
               ? instance.connectionStatus
@@ -427,6 +430,14 @@ export class InstanceController {
     const instanceNames = instanceName ? [instanceName] : null;
 
     return this.waMonitor.instanceInfo(instanceNames);
+  }
+
+  public async fetchInstancesByProject({ project }: InstanceDto) {
+    if (!project) {
+      throw new BadRequestException('Project is required');
+    }
+
+    return this.waMonitor.instanceInfoByProject(project);
   }
 
   public async setPresence({ instanceName }: InstanceDto, data: SetPresenceDto) {
